@@ -7,7 +7,7 @@
     "example": "example"
   },
   "dependencies": {
-    "raw-socket": "*"
+    "raw-socket": "github:Raraph84/node-raw-socket-timestamp"
   },
   "contributors": [
     {
@@ -28,8 +28,8 @@
     "icmp",
     "monitor",
     "monitoring",
-  	 "net",
-  	 "network",
+    "net",
+    "network",
     "ping",
     "trace",
     "trace-route",
