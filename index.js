@@ -317,8 +317,7 @@ Session.prototype.onSocketMessage = function (buffer, source, timestamp) {
 };
 
 Session.prototype.onSocketSend = function (req, error, bytes, timestamp) {
-    if (!req.sent)
-        req.sent = timestamp;
+    req.sent = timestamp;
     if (error) {
         this.reqRemove(req.id);
         req.callback(error, req.target, req.sent, req.sent);
