@@ -268,49 +268,39 @@ Session.prototype.onSocketMessage = function (buffer, source, timestamp) {
                 return;
         }
 
-        this.reqRemove(req.id);
-
         if (this.addressFamily == raw.AddressFamily.IPv6) {
             if (req.type == 1) {
-                req.callback(new DestinationUnreachableError(source), req.target,
-                    req.sent, timestamp);
+                req.error = new DestinationUnreachableError(source);
             } else if (req.type == 2) {
-                req.callback(new PacketTooBigError(source), req.target,
-                    req.sent, timestamp);
+                req.error = new PacketTooBigError(source);
             } else if (req.type == 3) {
-                req.callback(new TimeExceededError(source), req.target,
-                    req.sent, timestamp);
+                req.error = new TimeExceededError(source);
             } else if (req.type == 4) {
-                req.callback(new ParameterProblemError(source), req.target,
-                    req.sent, timestamp);
+                req.error = new ParameterProblemError(source);
             } else if (req.type == 129) {
+                this.reqRemove(req.id);
                 req.callback(null, req.target,
                     req.sent, timestamp);
             } else {
-                req.callback(new Error("Unknown response type '" + req.type
-                    + "' (source=" + source + ")"), req.target,
-                    req.sent, timestamp);
+                req.error = new Error("Unknown response type '" + req.type
+                    + "' (source=" + source + ")");
             }
         } else {
             if (req.type == 0) {
+                this.reqRemove(req.id);
                 req.callback(null, req.target,
                     req.sent, timestamp);
             } else if (req.type == 3) {
-                req.callback(new DestinationUnreachableError(source), req.target,
-                    req.sent, timestamp);
+                req.error = new DestinationUnreachableError(source);
             } else if (req.type == 4) {
-                req.callback(new SourceQuenchError(source), req.target,
-                    req.sent, timestamp);
+                req.error = new SourceQuenchError(source);
             } else if (req.type == 5) {
-                req.callback(new RedirectReceivedError(source), req.target,
-                    req.sent, timestamp);
+                req.error = new RedirectReceivedError(source);
             } else if (req.type == 11) {
-                req.callback(new TimeExceededError(source), req.target,
-                    req.sent, timestamp);
+                req.error = new TimeExceededError(source);
             } else {
-                req.callback(new Error("Unknown response type '" + req.type
-                    + "' (source=" + source + ")"), req.target,
-                    req.sent, timestamp);
+                req.error = new Error("Unknown response type '" + req.type
+                    + "' (source=" + source + ")");
             }
         }
     }
@@ -333,7 +323,7 @@ Session.prototype.onTimeout = function (req) {
         this.send(req);
     } else {
         this.reqRemove(req.id);
-        req.callback(new RequestTimedOutError("Request timed out"), req.target, req.sent, 0);
+        req.callback(req.error ?? new RequestTimedOutError("Request timed out"), req.target, req.sent, 0);
     }
 };
 
@@ -366,7 +356,8 @@ Session.prototype.pingHost = function (target, callback) {
         retries: this.retries,
         timeout: this.timeout,
         callback: callback,
-        target: target
+        target: target,
+        error: null
     };
 
     this.reqQueue(req);
@@ -528,7 +519,8 @@ Session.prototype.traceRoute = function (target, ttlOrOptions, feedCallback,
         retries: this.retries,
         timeout: this.timeout,
         ttl: startTtl,
-        target: target
+        target: target,
+        error: null
     };
     req.callback = me.traceRouteCallback.bind(me, trace, req);
 
