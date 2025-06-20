@@ -68,6 +68,7 @@ util.inherits(TimeExceededError, Error);
 function Session(options) {
     this.retries = (options && options.retries != undefined) ? options.retries : 1;
     this.timeout = (options && options.timeout) ? options.timeout : 2000;
+    this.throwsOnError = (options && options.throwsOnError) ? options.throwsOnError : false;
 
     this.packetSize = (options && options.packetSize) ? options.packetSize : 16;
 
@@ -303,6 +304,11 @@ Session.prototype.onSocketMessage = function (buffer, source, timestamp) {
                     + "' (source=" + source + ")");
             }
         }
+
+        if (this.throwsOnError && req.error) {
+            this.reqRemove(req.id);
+            req.callback(req.error, req.target, req.sent, timestamp);
+        }
     }
 };
 
@@ -356,8 +362,7 @@ Session.prototype.pingHost = function (target, callback) {
         retries: this.retries,
         timeout: this.timeout,
         callback: callback,
-        target: target,
-        error: null
+        target: target
     };
 
     this.reqQueue(req);
@@ -519,8 +524,7 @@ Session.prototype.traceRoute = function (target, ttlOrOptions, feedCallback,
         retries: this.retries,
         timeout: this.timeout,
         ttl: startTtl,
-        target: target,
-        error: null
+        target: target
     };
     req.callback = me.traceRouteCallback.bind(me, trace, req);
 
